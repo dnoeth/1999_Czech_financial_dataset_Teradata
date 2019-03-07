@@ -1,0 +1,291 @@
+﻿.SET SESSION TRANSACTION BTET;
+
+/************** modify logon & database **************/
+.LOGON 192.168.184.128/teradata_education,educate;
+DATABASE open_data;
+/*****************************************************/
+
+.SET QUIET ON;
+.SET TIMEMSG NONE;
+.SET ERROROUT STDOUT;
+.SET WIDTH 200;
+
+/*****************************************************
+To reload the tables must be dropped in a specific
+order due to the FK constraints
+*****************************************************/
+/*
+   DROP TABLE fin_card;
+   DROP TABLE fin_loan;
+   DROP TABLE fin_order;
+   DROP TABLE fin_trans;
+   DROP TABLE fin_disp;
+   DROP TABLE fin_client;
+   DROP TABLE fin_account;
+   DROP TABLE fin_district;
+*/
+
+
+/************* Create Tables *************/
+
+CREATE SET TABLE fin_account
+     (
+      account_id INTEGER NOT NULL,
+      district_id BYTEINT NOT NULL,
+      create_date DATE FORMAT 'yyyy-mm-dd' NOT NULL,
+      frequency CHAR(1) CHARACTER SET Latin Uppercase NOT CaseSpecific CHECK ( frequency  IN ('M','W','T') ) NOT NULL)
+UNIQUE PRIMARY INDEX ( account_id );
+
+COMMENT ON TABLE  fin_account IS 'account information (PK: account_id)';
+COMMENT ON COLUMN fin_account.account_id IS 'account identifier (PK)';
+COMMENT ON COLUMN fin_account.district_id IS 'location of the branch (FK to fin_district)';
+COMMENT ON COLUMN fin_account.create_date IS 'account creation date';
+COMMENT ON COLUMN fin_account.frequency IS 'statements issed per month/week/transaction, possible values: "M" (monthly), "W" (weekly), "T" (transaction)';
+
+
+CREATE SET TABLE fin_card
+     (
+      card_id INTEGER NOT NULL,
+      disp_id INTEGER NOT NULL,
+      card_type CHAR(1) CHARACTER SET Latin Uppercase NOT CaseSpecific CHECK ( card_type  IN ('C','G','J') ) NOT NULL,
+      issued_date DATE FORMAT 'yyyy-mm-dd' NOT NULL)
+UNIQUE PRIMARY INDEX ( card_id );
+
+COMMENT ON TABLE  fin_card IS 'credit card issued to an account (PK: card_id)';
+COMMENT ON COLUMN fin_card.card_id IS 'credid card identifier (PK)';
+COMMENT ON COLUMN fin_card.disp_id IS 'disposition (account) a credit card was issued to (FK to fin_disp)';
+COMMENT ON COLUMN fin_card.card_type IS 'card type, possible values: "J" (junior), "C" (classic), "G" (gold)';
+COMMENT ON COLUMN fin_card.issued_date IS 'date card was issued';
+
+CREATE SET TABLE fin_client
+     (
+      client_id INTEGER NOT NULL,
+      birth_date DATE FORMAT 'yyyy-mm-dd' NOT NULL,
+      gender CHAR(1) CHARACTER SET Latin Uppercase NOT CaseSpecific NOT NULL,
+      district_id BYTEINT)
+UNIQUE PRIMARY INDEX ( client_id );
+
+COMMENT ON TABLE  fin_client IS 'client information (PK: client_id)';
+COMMENT ON COLUMN fin_client.client_id IS 'client identifier (PK)';
+COMMENT ON COLUMN fin_client.birth_date IS 'date of birth of the client';
+COMMENT ON COLUMN fin_client.gender IS 'gender of the client, possible values: "M" (male), "F" (female)';
+COMMENT ON COLUMN fin_client.district_id IS 'district of the client''s address (FK to fin_district)';
+
+CREATE SET TABLE fin_disp
+     (
+      disp_id INTEGER NOT NULL,
+      client_id INTEGER NOT NULL,
+      account_id INTEGER NOT NULL,
+      disp_type CHAR(1) CHARACTER SET Latin Uppercase NOT CaseSpecific CHECK ( disp_type  IN ('O','D') ) NOT NULL)
+UNIQUE PRIMARY INDEX ( disp_id );
+
+COMMENT ON TABLE  fin_disp IS 'disposition information, relates a client with an account (PK: disp_id)';
+COMMENT ON COLUMN fin_disp.disp_id IS 'disposition identifier (PK)';
+COMMENT ON COLUMN fin_disp.client_id IS 'related client (FK to fin_client)';
+COMMENT ON COLUMN fin_disp.account_id IS 'related account (FK to fin_account)';
+COMMENT ON COLUMN fin_disp.disp_type IS 'type of disposition, possible values: "O" (owner), "D" (disponent). Only an owner can issue permanent orders and ask for a loan';
+
+
+CREATE SET TABLE fin_district
+     (
+      district_id BYTEINT NOT NULL,
+      district_name VARCHAR(19) CHARACTER SET Latin NOT CaseSpecific NOT NULL,
+      region VARCHAR(15) CHARACTER SET Latin NOT CaseSpecific NOT NULL,
+      num_inhabitants INTEGER,
+      num_municipalities_gt499 SMALLINT,
+      num_municipalities_500to1999 BYTEINT,
+      num_municipalities_2000to9999 BYTEINT,
+      num_municipalities_gt10000 BYTEINT,
+      num_cities BYTEINT,
+      ratio_urban DECIMAL(4,1),
+      average_salary DECIMAL(10,2),
+      unemployment_rate95 DECIMAL(3,2),
+      unemployment_rate96 DECIMAL(3,2),
+      num_entrep_per1000 SMALLINT,
+      num_crimes95 INTEGER,
+      num_crimes96 INTEGER)
+UNIQUE PRIMARY INDEX ( district_id );
+
+COMMENT ON TABLE fin_district IS 'district information, incl. region & demographics (PK: district_id)';
+COMMENT ON COLUMN fin_district.district_id IS 'district identifier (PK)';
+COMMENT ON COLUMN fin_district.district_name IS 'name of the district';
+COMMENT ON COLUMN fin_district.region IS 'region of the district';
+COMMENT ON COLUMN fin_district.num_inhabitants IS 'number of inhabitants';
+COMMENT ON COLUMN fin_district.num_municipalities_gt499 IS 'number of municipalities with < 500 inhabitants';
+COMMENT ON COLUMN fin_district.num_municipalities_500to1999 IS 'number of municipalities with 500 to 1999 inhabitants';
+COMMENT ON COLUMN fin_district.num_municipalities_2000to9999 IS 'number of municipalities with 2000 to 9999 inhabitants';
+COMMENT ON COLUMN fin_district.num_municipalities_gt10000 IS 'number of municipalities with >= 10000 inhabitants';
+COMMENT ON COLUMN fin_district.num_cities IS 'number of cities within district';
+COMMENT ON COLUMN fin_district.ratio_urban IS 'ratio of urban inhabitans';
+COMMENT ON COLUMN fin_district.average_salary IS 'average salay amount';
+COMMENT ON COLUMN fin_district.unemployment_rate95 IS 'unemployement rate 1995';
+COMMENT ON COLUMN fin_district.unemployment_rate96 IS 'unemployement rate 1996';
+COMMENT ON COLUMN fin_district.num_entrep_per1000 IS 'number of entrepreneurs per 1000 inhabitants';
+COMMENT ON COLUMN fin_district.num_crimes95 IS 'number of commited crimes 1995';
+COMMENT ON COLUMN fin_district.num_crimes96 IS 'number of commited crimes 1996';
+
+
+CREATE SET TABLE fin_loan
+     (
+      loan_id INTEGER NOT NULL,
+      account_id INTEGER NOT NULL,
+      granted_date DATE FORMAT 'yyyy-mm-dd' NOT NULL,
+      amount DECIMAL(12,2) NOT NULL,
+      duration SMALLINT NOT NULL,
+      payments DECIMAL(12,2) NOT NULL,
+      status CHAR(1) CHARACTER SET Latin Uppercase NOT CaseSpecific CHECK ( status  IN ('A','B','C','D') ) NOT NULL)
+PRIMARY INDEX ( account_id );
+
+COMMENT ON TABLE  fin_loan IS 'a loan granted for an account (PK: loan_id)';
+COMMENT ON COLUMN fin_loan.loan_id IS 'loan identifier (PK)';
+COMMENT ON COLUMN fin_loan.account_id IS 'related account (FK to fin_account)';
+COMMENT ON COLUMN fin_loan.granted_date IS 'date the loan was granted';
+COMMENT ON COLUMN fin_loan.amount IS 'amount of money loaned';
+COMMENT ON COLUMN fin_loan.duration IS 'duration in months';
+COMMENT ON COLUMN fin_loan.payments IS 'amount of monthly payment';
+COMMENT ON COLUMN fin_loan.status IS 'status of paying off the loan, possible values: "A" (contract finished, no problems), "B" (contract finished, loan not payed), "C" (running contract, OK so far), "D" (running contract, client in debt)';
+
+
+CREATE SET TABLE fin_order
+     (
+      order_id INTEGER NOT NULL,
+      account_id INTEGER NOT NULL,
+      bank_to VARCHAR(2) CHARACTER SET Latin NOT CaseSpecific NOT NULL,
+      account_to INTEGER NOT NULL,
+      amount DECIMAL(12,2) NOT NULL,
+      category CHAR(2) CHARACTER SET Latin NOT CaseSpecific CHECK ( category  IN ('HH','IN','LE','LO','') ) NOT NULL)
+PRIMARY INDEX ( account_id );
+
+COMMENT ON TABLE  fin_order IS 'a permanent order for payments of an account (PK: order_id)';
+COMMENT ON COLUMN fin_order.order_id IS 'order identifier (PK)';
+COMMENT ON COLUMN fin_order.account_id IS 'related account (FK to fin_account)';
+COMMENT ON COLUMN fin_order.bank_to IS 'bank of the recipient, two-letter code';
+COMMENT ON COLUMN fin_order.account_to IS 'account number of the recipient';
+COMMENT ON COLUMN fin_order.amount IS 'debited amount';
+COMMENT ON COLUMN fin_order.category IS 'characterization of the payment, possible values:  "HH" (household), "IN" (insurance), "LO" (loan), "LE" (leasing)';
+
+
+CREATE SET TABLE fin_trans
+     (
+      trans_id INTEGER NOT NULL,
+      account_id INTEGER NOT NULL,
+      trans_date DATE FORMAT 'yyyy-mm-dd' NOT NULL,
+      amount DECIMAL(12,2) NOT NULL,
+      balance DECIMAL(12,2) NOT NULL,
+      trans_type CHAR(1) CHARACTER SET LATIN UPPERCASE NOT CASESPECIFIC CHECK ( trans_type  IN ('C','D','P') ) NOT NULL,
+      operation CHAR(3) CHARACTER SET LATIN UPPERCASE NOT CASESPECIFIC CHECK ( operation  IN ('   ','CCW','CIC','COB','ROB','WIC') ) NOT NULL COMPRESS ('   ','CCW','CIC','COB','ROB','WIC'),
+      category CHAR(2) CHARACTER SET LATIN UPPERCASE NOT CASESPECIFIC CHECK ( category  IN ('  ','HH','IC','IN','IO','LO','PE','ST') ) COMPRESS ('  ','HH','IC','IN','IO','LO','PE','ST'),
+      other_bank_id CHAR(2) CHARACTER SET LATIN UPPERCASE NOT CASESPECIFIC COMPRESS ,
+      other_account_id INTEGER COMPRESS )
+PRIMARY INDEX ( account_id )
+PARTITION BY Range_N(trans_date BETWEEN DATE '2000-01-01' AND DATE '2030-12-31' EACH INTERVAL '1' MONTH );
+
+COMMENT ON TABLE  fin_trans IS 'a transaction on an account (PK: trans_id)';
+COMMENT ON COLUMN fin_trans.trans_id IS 'transaction identifier (PK)';
+COMMENT ON COLUMN fin_trans.account_id IS 'related account (FK to fin_account)';
+COMMENT ON COLUMN fin_trans.trans_date IS 'date of transaction';
+COMMENT ON COLUMN fin_trans.amount IS 'amount of money transferred';
+COMMENT ON COLUMN fin_trans.balance IS 'balance after transaction';
+COMMENT ON COLUMN fin_trans.trans_type IS 'type of transaction, possible values: "C" (credit), "D" (debit/withdrawal), "P" (cash withdrawal)';
+COMMENT ON COLUMN fin_trans.operation IS 'transaction mode, possible values: "CCW" (credit card withdrawal), "CIC" (credit in cash), "COB" (collection from another bank), "WIC" (withdrawal in cash), "ROB" (remittance to other bank)';
+COMMENT ON COLUMN fin_trans.category IS 'characterization of the transaction, possible values: "IC" (interest credited), "IO" (overdraft interest due to negative balance) ,"PE" (pension) ,"LO" (loan payment), "HH" (household payment), "ST" (payment for statement), "IN" (insurance payment)';
+COMMENT ON COLUMN fin_trans.other_bank_id IS 'bank of the partner: two-letter code';
+COMMENT ON COLUMN fin_trans.other_account_id IS 'account number of the partner bank';
+
+
+
+/************* Load Tables *************/
+
+.SET PACK 5000
+.SET SESSION CHARSET "utf8"
+
+
+.REMARK 'Loading fin_account: 4500 rows';
+.IMPORT vartext '	'  FILE fin_account.tsv
+.REPEAT *
+USING ("account_id" VARCHAR(11),"district_id" VARCHAR(4),"create_date" VARCHAR(10),"frequency" VARCHAR(1))
+INSERT INTO fin_account ("account_id","district_id","create_date","frequency")
+VALUES (:"account_id",:"district_id",:"create_date",:"frequency");
+
+
+.REMARK 'Loading fin_card: 892 rows';
+.IMPORT vartext '	'  FILE fin_card.tsv
+.REPEAT *
+USING ("card_id" VARCHAR(11),"disp_id" VARCHAR(11),"card_type" VARCHAR(1),"issued_date" VARCHAR(10))
+INSERT INTO fin_card ("card_id","disp_id","card_type","issued_date")
+VALUES (:"card_id",:"disp_id",:"card_type",:"issued_date");
+
+
+.REMARK 'Loading fin_client: 5369 rows';
+.IMPORT vartext '	'  FILE fin_client.tsv
+.REPEAT *
+USING ("client_id" VARCHAR(11),"birth_date" VARCHAR(10),"gender" VARCHAR(1),"district_id" VARCHAR(4))
+INSERT INTO fin_client ("client_id","birth_date","gender","district_id")
+VALUES (:"client_id",:"birth_date",:"gender",:"district_id");
+
+
+.REMARK 'Loading fin_disp: 5369 rows';
+.IMPORT vartext '	'  FILE fin_disp.tsv
+.REPEAT *
+USING ("disp_id" VARCHAR(11),"client_id" VARCHAR(11),"account_id" VARCHAR(11),"disp_type" VARCHAR(1))
+INSERT INTO fin_disp ("disp_id","client_id","account_id","disp_type")
+VALUES (:"disp_id",:"client_id",:"account_id",:"disp_type");
+
+
+.REMARK 'Loading fin_district: 77 rows';
+.IMPORT vartext '	'  FILE fin_district.tsv
+.REPEAT *
+USING ("district_id" VARCHAR(4),"district_name" VARCHAR(19),"region" VARCHAR(15),"num_inhabitants" VARCHAR(11),"num_municipalities_gt499" VARCHAR(6),"num_municipalities_500to1999" VARCHAR(4),"num_municipalities_2000to9999" VARCHAR(4),"num_municipalities_gt10000" VARCHAR(4),"num_cities" VARCHAR(4),"ratio_urban" VARCHAR(6),"average_salary" VARCHAR(12),"unemployment_rate95" VARCHAR(5),"unemployment_rate96" VARCHAR(5),"num_entrep_per1000" VARCHAR(6),"num_crimes95" VARCHAR(11),"num_crimes96" VARCHAR(11))
+INSERT INTO fin_district ("district_id","district_name","region","num_inhabitants","num_municipalities_gt499","num_municipalities_500to1999","num_municipalities_2000to9999","num_municipalities_gt10000","num_cities","ratio_urban","average_salary","unemployment_rate95","unemployment_rate96","num_entrep_per1000","num_crimes95","num_crimes96")
+VALUES (:"district_id",:"district_name",:"region",:"num_inhabitants",:"num_municipalities_gt499",:"num_municipalities_500to1999",:"num_municipalities_2000to9999",:"num_municipalities_gt10000",:"num_cities",:"ratio_urban",:"average_salary",:"unemployment_rate95",:"unemployment_rate96",:"num_entrep_per1000",:"num_crimes95",:"num_crimes96");
+
+
+.REMARK 'Loading fin_loan: 682 rows';
+.IMPORT vartext '	'  FILE fin_loan.tsv
+.REPEAT *
+USING ("loan_id" VARCHAR(11),"account_id" VARCHAR(11),"granted_date" VARCHAR(10),"amount" VARCHAR(14),"duration" VARCHAR(6),"payments" VARCHAR(14),"status" VARCHAR(1))
+INSERT INTO fin_loan ("loan_id","account_id","granted_date","amount","duration","payments","status")
+VALUES (:"loan_id",:"account_id",:"granted_date",:"amount",:"duration",:"payments",:"status");
+
+
+.REMARK 'Loading fin_order: 6471 rows';
+.IMPORT vartext '	'  FILE fin_order.tsv
+.REPEAT *
+USING ("order_id" VARCHAR(11),"account_id" VARCHAR(11),"bank_to" VARCHAR(2),"account_to" VARCHAR(11),"amount" VARCHAR(14),"category" VARCHAR(2))
+INSERT INTO fin_order ("order_id","account_id","bank_to","account_to","amount","category")
+VALUES (:"order_id",:"account_id",:"bank_to",:"account_to",:"amount",:"category");
+
+
+.REMARK 'Loading fin_trans: 1056320 rows';
+.IMPORT vartext '	'  FILE fin_trans.tsv
+.REPEAT *
+USING ("trans_id" VARCHAR(11),"account_id" VARCHAR(11),"trans_date" VARCHAR(10),"amount" VARCHAR(14),"balance" VARCHAR(14),"trans_type" VARCHAR(1),"operation" VARCHAR(3),"category" VARCHAR(3),"other_bank_id" VARCHAR(2),"other_account_id" VARCHAR(11))
+INSERT INTO fin_trans ("trans_id","account_id","trans_date","amount","balance","trans_type","operation","category","other_bank_id","other_account_id")
+VALUES (:"trans_id",:"account_id",:"trans_date",:"amount",:"balance",:"trans_type",:"operation",:"category",:"other_bank_id",:"other_account_id");
+
+
+/************* Adding Foreign Keys *************/
+
+ALTER TABLE fin_account
+ADD FOREIGN KEY (district_id) REFERENCES WITH NO CHECK OPTION fin_district (district_id);
+
+ALTER TABLE fin_loan
+ADD FOREIGN KEY (account_id) REFERENCES WITH NO CHECK OPTION fin_account (account_id);
+
+ALTER TABLE fin_order
+ADD FOREIGN KEY (account_id) REFERENCES WITH NO CHECK OPTION fin_account (account_id);
+
+ALTER TABLE fin_trans
+ADD FOREIGN KEY (account_id) REFERENCES WITH NO CHECK OPTION fin_account (account_id);
+
+ALTER TABLE fin_disp
+ADD FOREIGN KEY (account_id) REFERENCES WITH NO CHECK OPTION fin_account (account_id);
+
+ALTER TABLE fin_disp
+ADD FOREIGN KEY (client_id) REFERENCES WITH NO CHECK OPTION fin_client (client_id);
+
+ALTER TABLE fin_card
+ADD FOREIGN KEY (disp_id) REFERENCES WITH NO CHECK OPTION fin_disp (disp_id);
+
+ALTER TABLE fin_client
+ADD FOREIGN KEY (district_id) REFERENCES WITH NO CHECK OPTION fin_district (district_id);
