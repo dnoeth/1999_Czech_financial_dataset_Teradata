@@ -30,7 +30,7 @@ All files contain tab-delimited data:
 
 ### Installing using a Windows client
 
- 1. Download [financial_db_Teradata.zip](https://github.com/dnoeth/1999_Czech_financial_dataset_Teradata/releases/download/v1.0/financial_db_Teradata.zip) and extract the zip file to a folder, e.g. `C:\Samples\financial_db_Teradata`.
+ 1. Download [financial_db_Teradata.zip](https://github.com/dnoeth/1999_Czech_financial_dataset_Teradata/blob/master/financial_db_Teradata.zip) and extract the zip file to a folder, e.g. `C:\Samples\financial_db_Teradata`.
 
  2. Modify the file `fin_install.btq` to match your target system. Optionally modify the database name.
  
@@ -43,7 +43,7 @@ bteq < fin_install.btq > fin_install.log
 
 ### Installing using a Linux client
 
- 1. Download [financial_db_Teradata.zip](https://github.com/dnoeth/1999_Czech_financial_dataset_Teradata/releases/download/v1.0/financial_db_Teradata.zip) and extract the zip file to a folder, e.g. `~/Samples/financial_db_Teradata`.
+ 1. Download [financial_db_Teradata.zip]((https://github.com/dnoeth/1999_Czech_financial_dataset_Teradata/blob/master/financial_db_Teradata.zip)) and extract the zip file to a folder, e.g. `~/Samples/financial_db_Teradata`.
 
  2. Modify the file `fin_install.btq` to match your target system. Optionally modify the database name.
  
