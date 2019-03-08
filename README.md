@@ -6,6 +6,7 @@ Some modifications done to make the data look more up-to-date:
 
  1. 20 years were added to each date resulting in a date range from 2003 to 2018
  2. Amounts (in Czech Crowns) were divided by 10, now they look similar to current $ or € amounts.
+ 3. Czech descriptions are translated to English abbreviations, e.g. `VYBER KARTOU` = `credit card withdrawal`= `CCW` (see column comments for actual values).
  
 Based on the [Financial Data Set](http://sorry.vse.cz/~berka/challenge/pkdd1999/data_berka.zip) from [PKDD'99 Discovery Challenge.](https://sorry.vse.cz/~berka/challenge/pkdd1999/berka.htm).
 This data was prepared by [Petr Berka](https://sorry.vse.cz/~berka/challenge/) and Marta Sochorova.
