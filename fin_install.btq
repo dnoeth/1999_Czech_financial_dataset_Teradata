@@ -1,7 +1,7 @@
 ﻿.SET SESSION TRANSACTION BTET;
 
 /************** modify logon & database **************/
-.LOGON 192.168.184.128/teradata_education,educate;
+.LOGON myTeradata/myUser,myPassword;
 DATABASE open_data;
 /*****************************************************/
 
