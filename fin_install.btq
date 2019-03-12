@@ -7,7 +7,8 @@ DATABASE open_data;
 
 .SET QUIET ON;
 .SET TIMEMSG NONE;
-.SET ERROROUT STDOUT;
+.SET ECHOREQ ERRORONLY;
+.SET MAXERROR 1
 .SET WIDTH 200;
 
 /*****************************************************
