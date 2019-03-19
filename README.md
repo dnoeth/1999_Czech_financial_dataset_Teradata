@@ -60,12 +60,7 @@ bteq < fin_install.btq > fin_install.log
 
 The script should finish in a few minutes.
 
-If the install is running without errors you will see this message repeated 8 times: 
-```
- *** WARNING: OUT OF DATA.
-```
-
-Otherwise check the `fin_install.log` for errors
+If there's an error message returned check the `fin_install.log` the failing step.
 
 ### Reinstalling
 

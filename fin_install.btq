@@ -1,8 +1,8 @@
 ﻿.SET SESSION TRANSACTION BTET;
 
 /************** modify logon & database **************/
-.LOGON myTeradata/myUser,myPassword;
-DATABASE open_data;
+.LOGON 192.168.184.128/teradata_education,educate;
+DATABASE teradata_education;
 /*****************************************************/
 
 .SET QUIET ON;
@@ -263,6 +263,52 @@ VALUES (:"order_id",:"account_id",:"bank_to",:"account_to",:"amount",:"category"
 USING ("trans_id" VARCHAR(11),"account_id" VARCHAR(11),"trans_date" VARCHAR(10),"amount" VARCHAR(14),"balance" VARCHAR(14),"trans_type" VARCHAR(1),"operation" VARCHAR(3),"category" VARCHAR(3),"other_bank_id" VARCHAR(2),"other_account_id" VARCHAR(11))
 INSERT INTO fin_trans ("trans_id","account_id","trans_date","amount","balance","trans_type","operation","category","other_bank_id","other_account_id")
 VALUES (:"trans_id",:"account_id",:"trans_date",:"amount",:"balance",:"trans_type",:"operation",:"category",:"other_bank_id",:"other_account_id");
+
+
+/************* Collecting some statistics *************/
+
+COLLECT STATISTICS COLUMN (account_id) ON fin_account;
+COLLECT STATISTICS COLUMN (district_id) ON fin_account;
+COLLECT STATISTICS COLUMN (create_date) ON fin_account;
+COLLECT STATISTICS COLUMN (frequency) ON fin_account;
+
+COLLECT STATISTICS COLUMN (card_id) ON fin_card;
+COLLECT STATISTICS COLUMN (disp_id) ON fin_card;
+COLLECT STATISTICS COLUMN (card_type) ON fin_card;
+
+COLLECT STATISTICS COLUMN (client_id) ON fin_client;
+COLLECT STATISTICS COLUMN (birth_date) ON fin_client;
+COLLECT STATISTICS COLUMN (gender) ON fin_client;
+COLLECT STATISTICS COLUMN (district_id) ON fin_client;
+COLLECT STATISTICS COLUMN (disp_id) ON fin_disp;
+COLLECT STATISTICS COLUMN (client_id) ON fin_disp;
+COLLECT STATISTICS COLUMN (account_id) ON fin_disp;
+COLLECT STATISTICS COLUMN (disp_type) ON fin_disp;
+
+COLLECT STATISTICS COLUMN (district_id) ON fin_district;
+COLLECT STATISTICS COLUMN (region) ON fin_district;
+
+COLLECT STATISTICS COLUMN (loan_id) ON fin_loan;
+COLLECT STATISTICS COLUMN (account_id) ON fin_loan;
+COLLECT STATISTICS COLUMN (granted_date) ON fin_loan;
+COLLECT STATISTICS COLUMN (amount) ON fin_loan;
+COLLECT STATISTICS COLUMN (duration) ON fin_loan;
+COLLECT STATISTICS COLUMN (status) ON fin_loan;
+
+COLLECT STATISTICS COLUMN (order_id) ON fin_order;
+COLLECT STATISTICS COLUMN (account_id) ON fin_order;
+COLLECT STATISTICS COLUMN (amount) ON fin_order;
+COLLECT STATISTICS COLUMN (category) ON fin_order;
+
+COLLECT STATISTICS COLUMN (trans_id) ON fin_trans;
+COLLECT STATISTICS COLUMN (account_id) ON fin_trans;
+COLLECT STATISTICS COLUMN (trans_date) ON fin_trans;
+COLLECT STATISTICS COLUMN (amount) ON fin_trans;
+COLLECT STATISTICS COLUMN (trans_type) ON fin_trans;
+COLLECT STATISTICS COLUMN (operation) ON fin_trans;
+COLLECT STATISTICS COLUMN (category) ON fin_trans;
+COLLECT STATISTICS COLUMN (PARTITION) ON fin_trans;
+COLLECT STATISTICS COLUMN (PARTITION, account_id) ON fin_trans;
 
 
 /************* Adding Foreign Keys *************/
